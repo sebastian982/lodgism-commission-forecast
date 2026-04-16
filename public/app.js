@@ -388,25 +388,70 @@ function renderProperties() {
     return;
   }
 
-  container.innerHTML = filtered.map(prop => {
-    const yearGri = prop.gri.filter(g => g.year === selectedYear);
-    const totalCommission = yearGri.reduce((sum, g) => sum + (g.amount * prop.commRate), 0);
+  // Extract state from market (e.g., "Bristol, NH" -> "NH")
+  const getState = (market) => {
+    const parts = market.split(',');
+    return parts.length > 1 ? parts[parts.length - 1].trim() : market;
+  };
+
+  // Group by state
+  const byState = {};
+  filtered.forEach(prop => {
+    const state = getState(prop.market);
+    if (!byState[state]) byState[state] = [];
+    byState[state].push(prop);
+  });
+
+  // Sort states alphabetically, then properties within each state
+  const sortedStates = Object.keys(byState).sort();
+  sortedStates.forEach(state => {
+    byState[state].sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  // State full names
+  const stateNames = {
+    'NH': 'New Hampshire',
+    'MA': 'Massachusetts',
+    'VT': 'Vermont',
+    'ME': 'Maine',
+    'CT': 'Connecticut',
+    'RI': 'Rhode Island'
+  };
+
+  container.innerHTML = sortedStates.map(state => {
+    const stateProps = byState[state];
+    const stateName = stateNames[state] || state;
 
     return `
-      <div class="property-card" onclick="openEditModal(${prop.id})">
-        <div class="property-info">
-          <span class="property-name">${prop.name}</span>
-          <div class="property-meta">
-            <span>${prop.market}</span>
-            <span>${(prop.commRate * 100).toFixed(0)}% rate</span>
-          </div>
+      <div class="state-group">
+        <div class="state-header">
+          <span class="state-name">${stateName}</span>
+          <span class="state-count">${stateProps.length} ${stateProps.length === 1 ? 'property' : 'properties'}</span>
         </div>
-        <div class="property-right">
-          <div class="property-commission">
-            <div class="amount">${formatCurrency(totalCommission)}</div>
-            <div class="label">${selectedYear} projected</div>
-          </div>
-          <span class="badge ${prop.status === 'Active' ? 'active' : 'launch'}">${prop.status}</span>
+        <div class="state-properties">
+          ${stateProps.map(prop => {
+            const yearGri = prop.gri.filter(g => g.year === selectedYear);
+            const totalCommission = yearGri.reduce((sum, g) => sum + (g.amount * prop.commRate), 0);
+
+            return `
+              <div class="property-card" onclick="openEditModal(${prop.id})">
+                <div class="property-info">
+                  <span class="property-name">${prop.name}</span>
+                  <div class="property-meta">
+                    <span>${prop.market}</span>
+                    <span>${(prop.commRate * 100).toFixed(1)}% rate</span>
+                  </div>
+                </div>
+                <div class="property-right">
+                  <div class="property-commission">
+                    <div class="amount">${formatCurrency(totalCommission)}</div>
+                    <div class="label">${selectedYear} projected</div>
+                  </div>
+                  <span class="badge ${prop.status === 'Active' ? 'active' : 'launch'}">${prop.status}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       </div>
     `;
