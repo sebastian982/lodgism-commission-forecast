@@ -1,0 +1,17 @@
+{
+  "name": "lodgism-commission-forecast",
+  "version": "1.0.0",
+  "description": "Personal dashboard to track projected and actual commission earnings from short-term rental properties",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["commission", "forecast", "rental", "dashboard"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "express": "^4.18.2",
+    "open": "^10.0.3"
+  }
+}

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lodgism Commission Forecast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-left">
+        <h1>Lodgism</h1>
+        <span class="subtitle">Commission Forecast</span>
+      </div>
+      <div class="header-right">
+        <select id="yearSelector" class="year-selector">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+        </select>
+        <a href="/api/export" class="export-btn">Export JSON</a>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="properties">Properties</button>
+      <button class="tab" data-view="monthly">Monthly Breakdown</button>
+      <button class="tab" data-view="actuals">Actuals</button>
+      <button class="tab" data-view="add-property">+ Add Property</button>
+    </nav>
+
+    <main class="main-content">
+      <!-- Dashboard View -->
+      <div id="dashboard" class="view active">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <span class="stat-label">Total Projected</span>
+            <span class="stat-value" id="totalProjected">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">YTD Actual</span>
+            <span class="stat-value" id="ytdActual">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Variance</span>
+            <span class="stat-value" id="variance">$0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Properties</span>
+            <span class="stat-value" id="propertyCount">0</span>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card chart-card">
+            <h3>Monthly Commission Projection</h3>
+            <div class="chart-container" id="monthlyChart"></div>
+          </div>
+
+          <div class="card">
+            <h3>Portfolio Status</h3>
+            <div class="portfolio-counts" id="portfolioCounts"></div>
+          </div>
+
+          <div class="card">
+            <h3>Top Earners</h3>
+            <div class="top-earners" id="topEarners"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Properties View -->
+      <div id="properties" class="view">
+        <div class="view-header">
+          <h2>Properties</h2>
+          <div class="filters">
+            <select id="statusFilter" class="filter-select">
+              <option value="">All Status</option>
+              <option value="Active">Active</option>
+              <option value="In Launch">In Launch</option>
+            </select>
+            <select id="marketFilter" class="filter-select">
+              <option value="">All Markets</option>
+            </select>
+          </div>
+        </div>
+        <div class="properties-list" id="propertiesList"></div>
+      </div>
+
+      <!-- Monthly Breakdown View -->
+      <div id="monthly" class="view">
+        <h2>Monthly Breakdown</h2>
+        <div class="monthly-table-wrapper">
+          <table class="monthly-table" id="monthlyTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Actuals View -->
+      <div id="actuals" class="view">
+        <div class="view-header">
+          <h2>Actuals</h2>
+          <button class="btn btn-primary" id="addActualBtn">+ Add Actual</button>
+        </div>
+        <div class="actuals-comparison" id="actualsComparison"></div>
+        <div class="actuals-list" id="actualsList"></div>
+      </div>
+
+      <!-- Add Property View -->
+      <div id="add-property" class="view">
+        <h2>Add New Property</h2>
+        <form id="addPropertyForm" class="property-form">
+          <div class="form-group">
+            <label for="propName">Property Name</label>
+            <input type="text" id="propName" required>
+          </div>
+          <div class="form-group">
+            <label for="propMarket">Market</label>
+            <input type="text" id="propMarket" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="propStatus">Status</label>
+              <select id="propStatus">
+                <option value="Active">Active</option>
+                <option value="In Launch">In Launch</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="propCommRate">Commission Rate</label>
+              <input type="number" id="propCommRate" step="0.01" min="0" max="1" value="0.20">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="propNote">Note</label>
+            <textarea id="propNote" rows="3"></textarea>
+          </div>
+          <h3>Monthly GRI Projections</h3>
+          <div class="gri-inputs" id="griInputs"></div>
+          <button type="submit" class="btn btn-primary">Add Property</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- Edit Property Modal -->
+  <div class="modal" id="editPropertyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Property</h3>
+        <button class="modal-close" id="closeEditModal">&times;</button>
+      </div>
+      <form id="editPropertyForm">
+        <input type="hidden" id="editPropId">
+        <div class="form-group">
+          <label for="editPropName">Property Name</label>
+          <input type="text" id="editPropName" required>
+        </div>
+        <div class="form-group">
+          <label for="editPropMarket">Market</label>
+          <input type="text" id="editPropMarket" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editPropStatus">Status</label>
+            <select id="editPropStatus">
+              <option value="Active">Active</option>
+              <option value="In Launch">In Launch</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editPropCommRate">Commission Rate</label>
+            <input type="number" id="editPropCommRate" step="0.01" min="0" max="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="editPropNote">Note</label>
+          <textarea id="editPropNote" rows="3"></textarea>
+        </div>
+        <h4>Monthly GRI Projections</h4>
+        <div class="gri-inputs" id="editGriInputs"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="deletePropertyBtn">Delete</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Actual Modal -->
+  <div class="modal" id="addActualModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="actualModalTitle">Add Actual</h3>
+        <button class="modal-close" id="closeActualModal">&times;</button>
+      </div>
+      <form id="actualForm">
+        <input type="hidden" id="actualId">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="actualYear">Year</label>
+            <select id="actualYear"></select>
+          </div>
+          <div class="form-group">
+            <label for="actualMonth">Month</label>
+            <select id="actualMonth">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="actualAmount">Amount ($)</label>
+          <input type="number" id="actualAmount" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="actualNote">Note</label>
+          <textarea id="actualNote" rows="2"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="deleteActualBtn" style="display:none">Delete</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
