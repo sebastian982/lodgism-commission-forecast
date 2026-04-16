@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { initDB, getDB } = require('./db/database');
+const { initDB } = require('./db/database');
 
 const app = express();
 const PORT = 3000;
@@ -20,8 +20,12 @@ async function start() {
 
   app.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    const open = (await import('open')).default;
-    open(`http://localhost:${PORT}`);
+    try {
+      const open = (await import('open')).default;
+      await open(`http://localhost:${PORT}`);
+    } catch (err) {
+      console.log('Could not auto-open browser. Please navigate to the URL above.');
+    }
   });
 }
 

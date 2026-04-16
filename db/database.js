@@ -163,7 +163,7 @@ function queryToObjects(result) {
   });
 }
 
-// Database wrapper methods for compatibility
+// Database wrapper methods for compatibility with better-sqlite3-style API
 function getDB() {
   return {
     prepare: (sql) => ({
