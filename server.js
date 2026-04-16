@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const open = require('open');
 const { initDB, getDB } = require('./db/database');
 
 const app = express();
@@ -19,8 +18,9 @@ async function start() {
   app.use('/api/actuals', require('./routes/actuals'));
   app.use('/api/export', require('./routes/export'));
 
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);
+    const open = (await import('open')).default;
     open(`http://localhost:${PORT}`);
   });
 }
