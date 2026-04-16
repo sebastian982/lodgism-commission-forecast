@@ -17,6 +17,7 @@ async function start() {
   app.use('/api/properties', require('./routes/properties'));
   app.use('/api/actuals', require('./routes/actuals'));
   app.use('/api/export', require('./routes/export'));
+  app.use('/api/import', require('./routes/import'));
 
   app.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);

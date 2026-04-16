@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
   initGriInputs();
   initActualYearOptions();
+  initImport();
   loadData();
 });
 
@@ -580,6 +581,121 @@ function formatCurrency(amount, short = false) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   });
+}
+
+// Import functionality
+function initImport() {
+  const importBtn = document.getElementById('importBtn');
+  const importModal = document.getElementById('importModal');
+  const closeImportModal = document.getElementById('closeImportModal');
+  const dropzone = document.getElementById('importDropzone');
+  const fileInput = document.getElementById('importFileInput');
+
+  importBtn.addEventListener('click', () => {
+    // Reset modal state
+    document.getElementById('importStatus').style.display = 'none';
+    document.getElementById('importResult').style.display = 'none';
+    dropzone.style.display = 'block';
+    importModal.classList.add('active');
+  });
+
+  closeImportModal.addEventListener('click', () => {
+    importModal.classList.remove('active');
+  });
+
+  importModal.addEventListener('click', (e) => {
+    if (e.target.id === 'importModal') {
+      importModal.classList.remove('active');
+    }
+  });
+
+  // Dropzone events
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileImport(file);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleFileImport(file);
+    fileInput.value = ''; // Reset for re-upload of same file
+  });
+}
+
+async function handleFileImport(file) {
+  const dropzone = document.getElementById('importDropzone');
+  const status = document.getElementById('importStatus');
+  const result = document.getElementById('importResult');
+
+  // Validate file type
+  const validTypes = ['.csv', '.xlsx', '.xls'];
+  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+  if (!validTypes.includes(ext)) {
+    showImportResult(false, 'Invalid file type. Please upload a CSV or Excel file.');
+    return;
+  }
+
+  // Show loading state
+  dropzone.style.display = 'none';
+  status.style.display = 'block';
+  result.style.display = 'none';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/import', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      let message = data.message;
+      if (data.errors && data.errors.length > 0) {
+        message += `\n\nWarnings:\n${data.errors.slice(0, 5).join('\n')}`;
+        if (data.errors.length > 5) {
+          message += `\n...and ${data.errors.length - 5} more`;
+        }
+      }
+      showImportResult(true, message);
+      loadData(); // Refresh the property list
+    } else {
+      showImportResult(false, data.error || 'Import failed');
+    }
+  } catch (error) {
+    console.error('Import error:', error);
+    showImportResult(false, 'Import failed: ' + error.message);
+  }
+
+  status.style.display = 'none';
+}
+
+function showImportResult(success, message) {
+  const dropzone = document.getElementById('importDropzone');
+  const result = document.getElementById('importResult');
+
+  dropzone.style.display = 'block';
+  result.style.display = 'block';
+  result.className = 'import-result ' + (success ? 'success' : 'error');
+  result.innerHTML = `
+    <h4>${success ? 'Import Successful' : 'Import Failed'}</h4>
+    <p>${message.replace(/\n/g, '<br>')}</p>
+  `;
 }
 
 // Make openActualModal available globally for onclick

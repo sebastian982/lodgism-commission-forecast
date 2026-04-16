@@ -79,6 +79,9 @@
       <div id="properties" class="view">
         <div class="view-header">
           <h2>Properties</h2>
+          <div class="view-actions">
+            <button class="btn btn-secondary" id="importBtn">Import</button>
+          </div>
           <div class="filters">
             <select id="statusFilter" class="filter-select">
               <option value="">All Status</option>
@@ -240,6 +243,45 @@
           <button type="submit" class="btn btn-primary">Save</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div class="modal" id="importModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Import Properties</h3>
+        <button class="modal-close" id="closeImportModal">&times;</button>
+      </div>
+      <div class="import-dropzone" id="importDropzone">
+        <div class="dropzone-content">
+          <div class="dropzone-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="dropzone-text">Drag & drop a file here, or click to browse</p>
+          <p class="dropzone-hint">Supports CSV, XLSX files</p>
+          <div class="file-types">
+            <span class="file-badge csv">.csv</span>
+            <span class="file-badge xlsx">.xlsx</span>
+          </div>
+        </div>
+        <input type="file" id="importFileInput" accept=".csv,.xlsx,.xls" hidden>
+      </div>
+      <div class="import-status" id="importStatus" style="display: none;">
+        <div class="import-progress">
+          <div class="spinner"></div>
+          <span>Importing...</span>
+        </div>
+      </div>
+      <div class="import-result" id="importResult" style="display: none;"></div>
+      <div class="import-help">
+        <h4>Expected Columns</h4>
+        <p>Property, Market, Status, Comm %, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec</p>
+      </div>
     </div>
   </div>
 

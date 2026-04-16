@@ -779,3 +779,162 @@ h1, h2, h3, h4, h5, h6, .stat-value {
   margin-bottom: 8px;
   color: var(--text);
 }
+
+/* View Actions */
+.view-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+  border-color: var(--border-hover);
+}
+
+/* Import Dropzone */
+.import-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.import-dropzone:hover,
+.import-dropzone.dragover {
+  border-color: var(--primary);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dropzone-icon {
+  color: var(--text-muted);
+}
+
+.import-dropzone:hover .dropzone-icon,
+.import-dropzone.dragover .dropzone-icon {
+  color: var(--primary);
+}
+
+.dropzone-text {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.dropzone-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.file-types {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.file-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.file-badge.csv {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--primary);
+}
+
+.file-badge.xlsx {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--amber);
+}
+
+/* Import Status */
+.import-status {
+  padding: 20px;
+  text-align: center;
+}
+
+.import-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Import Result */
+.import-result {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.import-result.success {
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.import-result.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.import-result h4 {
+  margin-bottom: 8px;
+}
+
+.import-result p {
+  font-size: 14px;
+}
+
+/* Import Help */
+.import-help {
+  padding: 16px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.import-help h4 {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.import-help p {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+}
