@@ -10,8 +10,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
     "express": "^4.18.2",
-    "open": "^10.0.3"
+    "open": "^10.0.3",
+    "sql.js": "^1.10.2"
   }
 }

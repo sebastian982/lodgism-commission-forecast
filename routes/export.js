@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/database');
+const { getDB } = require('../db/database');
 
 // GET full JSON export
 router.get('/', (req, res) => {
+  const db = getDB();
+
   const properties = db.prepare('SELECT * FROM properties ORDER BY id').all();
   const propertyGri = db.prepare('SELECT * FROM property_gri ORDER BY propertyId, year, month').all();
   const actuals = db.prepare('SELECT * FROM actuals ORDER BY year, month').all();

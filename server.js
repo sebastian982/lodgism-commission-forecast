@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const open = require('open');
+const { initDB, getDB } = require('./db/database');
 
 const app = express();
 const PORT = 3000;
@@ -9,13 +10,22 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes
-app.use('/api/properties', require('./routes/properties'));
-app.use('/api/actuals', require('./routes/actuals'));
-app.use('/api/export', require('./routes/export'));
+// Initialize database and start server
+async function start() {
+  await initDB();
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  open(`http://localhost:${PORT}`);
+  // API Routes
+  app.use('/api/properties', require('./routes/properties'));
+  app.use('/api/actuals', require('./routes/actuals'));
+  app.use('/api/export', require('./routes/export'));
+
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+    open(`http://localhost:${PORT}`);
+  });
+}
+
+start().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

@@ -1,48 +1,80 @@
-const Database = require('better-sqlite3');
+const initSqlJs = require('sql.js');
+const fs = require('fs');
 const path = require('path');
 
-const db = new Database(path.join(__dirname, '..', 'lodgism.db'));
+const dbPath = path.join(__dirname, '..', 'lodgism.db');
+let db = null;
 
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
+// Initialize database
+async function initDB() {
+  const SQL = await initSqlJs();
 
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS properties (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    market TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'Active',
-    commRate REAL NOT NULL DEFAULT 0.20,
-    note TEXT,
-    createdAt TEXT DEFAULT (datetime('now')),
-    updatedAt TEXT DEFAULT (datetime('now'))
-  );
+  // Load existing database or create new
+  if (fs.existsSync(dbPath)) {
+    const buffer = fs.readFileSync(dbPath);
+    db = new SQL.Database(buffer);
+  } else {
+    db = new SQL.Database();
+  }
 
-  CREATE TABLE IF NOT EXISTS property_gri (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    propertyId INTEGER NOT NULL,
-    year INTEGER NOT NULL,
-    month INTEGER NOT NULL,
-    amount REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (propertyId) REFERENCES properties(id) ON DELETE CASCADE,
-    UNIQUE(propertyId, year, month)
-  );
+  // Create tables
+  db.run(`
+    CREATE TABLE IF NOT EXISTS properties (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      market TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'Active',
+      commRate REAL NOT NULL DEFAULT 0.20,
+      note TEXT,
+      createdAt TEXT DEFAULT (datetime('now')),
+      updatedAt TEXT DEFAULT (datetime('now'))
+    )
+  `);
 
-  CREATE TABLE IF NOT EXISTS actuals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    year INTEGER NOT NULL,
-    month INTEGER NOT NULL,
-    amount REAL NOT NULL,
-    note TEXT,
-    createdAt TEXT DEFAULT (datetime('now'))
-  );
-`);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS property_gri (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      propertyId INTEGER NOT NULL,
+      year INTEGER NOT NULL,
+      month INTEGER NOT NULL,
+      amount REAL NOT NULL DEFAULT 0,
+      FOREIGN KEY (propertyId) REFERENCES properties(id) ON DELETE CASCADE,
+      UNIQUE(propertyId, year, month)
+    )
+  `);
 
-// Seed data if tables are empty
-const propertyCount = db.prepare('SELECT COUNT(*) as count FROM properties').get();
+  db.run(`
+    CREATE TABLE IF NOT EXISTS actuals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      year INTEGER NOT NULL,
+      month INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      note TEXT,
+      createdAt TEXT DEFAULT (datetime('now'))
+    )
+  `);
 
-if (propertyCount.count === 0) {
+  // Seed data if tables are empty
+  const countResult = db.exec('SELECT COUNT(*) as count FROM properties');
+  const propertyCount = countResult.length > 0 ? countResult[0].values[0][0] : 0;
+
+  if (propertyCount === 0) {
+    seedData();
+  }
+
+  saveDB();
+  return db;
+}
+
+function saveDB() {
+  if (db) {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    fs.writeFileSync(dbPath, buffer);
+  }
+}
+
+function seedData() {
   const seedProperties = [
     { name: 'Mountain View Cabin', market: 'Asheville', status: 'Active', commRate: 0.20 },
     { name: 'Lakeside Retreat', market: 'Lake Tahoe', status: 'Active', commRate: 0.18 },
@@ -72,17 +104,6 @@ if (propertyCount.count === 0) {
     { name: 'Island Bungalow', market: 'Key West', status: 'In Launch', commRate: 0.22 }
   ];
 
-  const insertProperty = db.prepare(`
-    INSERT INTO properties (name, market, status, commRate)
-    VALUES (@name, @market, @status, @commRate)
-  `);
-
-  const insertGRI = db.prepare(`
-    INSERT INTO property_gri (propertyId, year, month, amount)
-    VALUES (@propertyId, @year, @month, @amount)
-  `);
-
-  // GRI patterns for different property types (monthly amounts)
   const griPatterns = [
     [4200, 3800, 5500, 6200, 7800, 8500, 9200, 9500, 8800, 6500, 4800, 5200],
     [5500, 5200, 6800, 7500, 8200, 9800, 10500, 11000, 9500, 7200, 5800, 6200],
@@ -92,31 +113,26 @@ if (propertyCount.count === 0) {
     [4500, 4800, 5500, 5200, 4800, 4200, 3800, 3500, 4200, 5200, 5500, 5000]
   ];
 
-  const insertMany = db.transaction(() => {
-    seedProperties.forEach((prop, idx) => {
-      const result = insertProperty.run(prop);
-      const propertyId = result.lastInsertRowid;
-      const pattern = griPatterns[idx % griPatterns.length];
+  seedProperties.forEach((prop, idx) => {
+    db.run(
+      'INSERT INTO properties (name, market, status, commRate) VALUES (?, ?, ?, ?)',
+      [prop.name, prop.market, prop.status, prop.commRate]
+    );
 
-      // Add GRI for 2026
-      pattern.forEach((amount, month) => {
-        insertGRI.run({
-          propertyId,
-          year: 2026,
-          month: month + 1,
-          amount: amount + Math.floor(Math.random() * 500) - 250
-        });
-      });
+    const result = db.exec('SELECT last_insert_rowid() as id');
+    const propertyId = result[0].values[0][0];
+    const pattern = griPatterns[idx % griPatterns.length];
+
+    pattern.forEach((amount, month) => {
+      const randomAmount = amount + Math.floor(Math.random() * 500) - 250;
+      db.run(
+        'INSERT INTO property_gri (propertyId, year, month, amount) VALUES (?, ?, ?, ?)',
+        [propertyId, 2026, month + 1, randomAmount]
+      );
     });
   });
 
-  insertMany();
-}
-
-// Seed actuals if empty
-const actualsCount = db.prepare('SELECT COUNT(*) as count FROM actuals').get();
-
-if (actualsCount.count === 0) {
+  // Seed actuals
   const seedActuals = [
     { year: 2026, month: 1, amount: 12450, note: 'January payments received' },
     { year: 2026, month: 2, amount: 11280, note: 'February payments' },
@@ -126,12 +142,69 @@ if (actualsCount.count === 0) {
     { year: 2025, month: 12, amount: 15200, note: 'December 2025 - holiday season' }
   ];
 
-  const insertActual = db.prepare(`
-    INSERT INTO actuals (year, month, amount, note)
-    VALUES (@year, @month, @amount, @note)
-  `);
-
-  seedActuals.forEach(actual => insertActual.run(actual));
+  seedActuals.forEach(actual => {
+    db.run(
+      'INSERT INTO actuals (year, month, amount, note) VALUES (?, ?, ?, ?)',
+      [actual.year, actual.month, actual.amount, actual.note]
+    );
+  });
 }
 
-module.exports = db;
+// Helper function to convert query results to objects
+function queryToObjects(result) {
+  if (!result || result.length === 0) return [];
+  const columns = result[0].columns;
+  return result[0].values.map(row => {
+    const obj = {};
+    columns.forEach((col, i) => {
+      obj[col] = row[i];
+    });
+    return obj;
+  });
+}
+
+// Database wrapper methods for compatibility
+function getDB() {
+  return {
+    prepare: (sql) => ({
+      all: (...params) => {
+        try {
+          const result = db.exec(sql, params.length > 0 ? params : undefined);
+          return queryToObjects(result);
+        } catch (e) {
+          return [];
+        }
+      },
+      get: (...params) => {
+        try {
+          const result = db.exec(sql, params.length > 0 ? params : undefined);
+          const objects = queryToObjects(result);
+          return objects.length > 0 ? objects[0] : undefined;
+        } catch (e) {
+          return undefined;
+        }
+      },
+      run: (...params) => {
+        try {
+          db.run(sql, params.length > 0 ? params : undefined);
+          const lastId = db.exec('SELECT last_insert_rowid() as id');
+          const changes = db.exec('SELECT changes() as changes');
+          saveDB();
+          return {
+            lastInsertRowid: lastId[0]?.values[0]?.[0] || 0,
+            changes: changes[0]?.values[0]?.[0] || 0
+          };
+        } catch (e) {
+          console.error('SQL Error:', e.message);
+          return { lastInsertRowid: 0, changes: 0 };
+        }
+      }
+    }),
+    exec: (sql) => {
+      db.run(sql);
+      saveDB();
+    }
+  };
+}
+
+module.exports = { initDB, getDB, saveDB };

@@ -1,31 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/database');
+const { getDB } = require('../db/database');
 
 // GET all actuals
 router.get('/', (req, res) => {
+  const db = getDB();
   const year = req.query.year ? parseInt(req.query.year) : null;
 
-  const query = year
-    ? 'SELECT * FROM actuals WHERE year = ? ORDER BY year DESC, month DESC'
-    : 'SELECT * FROM actuals ORDER BY year DESC, month DESC';
+  const actuals = year
+    ? db.prepare('SELECT * FROM actuals WHERE year = ? ORDER BY year DESC, month DESC').all(year)
+    : db.prepare('SELECT * FROM actuals ORDER BY year DESC, month DESC').all();
 
-  const actuals = db.prepare(query).all(year ? [year] : []);
   res.json(actuals);
 });
 
 // POST create actual
 router.post('/', (req, res) => {
+  const db = getDB();
   const { year, month, amount, note } = req.body;
 
   if (!year || !month || amount === undefined) {
     return res.status(400).json({ error: 'year, month, and amount are required' });
   }
 
-  const result = db.prepare(`
-    INSERT INTO actuals (year, month, amount, note)
-    VALUES (?, ?, ?, ?)
-  `).run(year, month, amount, note || null);
+  const result = db.prepare(
+    'INSERT INTO actuals (year, month, amount, note) VALUES (?, ?, ?, ?)'
+  ).run(year, month, amount, note || null);
 
   const actual = db.prepare('SELECT * FROM actuals WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(actual);
@@ -33,19 +33,18 @@ router.post('/', (req, res) => {
 
 // PUT update actual
 router.put('/:id', (req, res) => {
+  const db = getDB();
   const { year, month, amount, note } = req.body;
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
 
   const existing = db.prepare('SELECT * FROM actuals WHERE id = ?').get(id);
   if (!existing) {
     return res.status(404).json({ error: 'Actual not found' });
   }
 
-  db.prepare(`
-    UPDATE actuals
-    SET year = ?, month = ?, amount = ?, note = ?
-    WHERE id = ?
-  `).run(
+  db.prepare(
+    'UPDATE actuals SET year = ?, month = ?, amount = ?, note = ? WHERE id = ?'
+  ).run(
     year !== undefined ? year : existing.year,
     month !== undefined ? month : existing.month,
     amount !== undefined ? amount : existing.amount,
@@ -59,7 +58,8 @@ router.put('/:id', (req, res) => {
 
 // DELETE actual
 router.delete('/:id', (req, res) => {
-  const result = db.prepare('DELETE FROM actuals WHERE id = ?').run(req.params.id);
+  const db = getDB();
+  const result = db.prepare('DELETE FROM actuals WHERE id = ?').run(parseInt(req.params.id));
 
   if (result.changes === 0) {
     return res.status(404).json({ error: 'Actual not found' });
