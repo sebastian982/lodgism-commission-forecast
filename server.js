@@ -1,36 +1,24 @@
+/**
+ * Local development server — serves /public as a static site.
+ * All data operations are handled by the Supabase JS client in the browser.
+ *
+ * Production: deploy the /public folder to Netlify, Vercel, or GitHub Pages.
+ *   netlify deploy --dir=public --prod
+ *   vercel --prod  (set outputDirectory=public in vercel.json)
+ */
+
 const express = require('express');
-const path = require('path');
-const { initDB } = require('./db/database');
+const path    = require('path');
 
-const app = express();
-const PORT = 3000;
+const app  = express();
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Initialize database and start server
-async function start() {
-  await initDB();
-
-  // API Routes
-  app.use('/api/properties', require('./routes/properties'));
-  app.use('/api/actuals', require('./routes/actuals'));
-  app.use('/api/export', require('./routes/export'));
-  app.use('/api/import', require('./routes/import'));
-
-  app.listen(PORT, async () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-    try {
-      const open = (await import('open')).default;
-      await open(`http://localhost:${PORT}`);
-    } catch (err) {
-      console.log('Could not auto-open browser. Please navigate to the URL above.');
-    }
-  });
-}
-
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
+app.listen(PORT, async () => {
+  console.log(`Dev server → http://localhost:${PORT}`);
+  try {
+    const open = (await import('open')).default;
+    await open(`http://localhost:${PORT}`);
+  } catch (_) {}
 });

@@ -272,7 +272,7 @@ h1, h2, h3, h4, h5, h6, .stat-value {
 .chart-container {
   height: 300px;
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 8px;
   padding: 20px 0;
 }
@@ -282,7 +282,15 @@ h1, h2, h3, h4, h5, h6, .stat-value {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+}
+
+.chart-bar-area {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .chart-bar-fill {
@@ -303,6 +311,9 @@ h1, h2, h3, h4, h5, h6, .stat-value {
   font-size: 10px;
   color: var(--primary);
   font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+  padding-bottom: 2px;
 }
 
 /* Portfolio Counts */
@@ -385,6 +396,28 @@ h1, h2, h3, h4, h5, h6, .stat-value {
 .filters {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  min-width: 200px;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .filter-select {
@@ -770,6 +803,7 @@ h1, h2, h3, h4, h5, h6, .stat-value {
 }
 
 .gri-input input {
+  width: 100%;
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
@@ -1045,4 +1079,185 @@ h1, h2, h3, h4, h5, h6, .stat-value {
 .import-help p {
   color: var(--text);
   font-family: monospace;
+}
+
+/* GRI section header (heading + import button side-by-side) */
+.gri-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gri-section-header h3,
+.gri-section-header h4 {
+  margin: 0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-link:hover {
+  color: var(--primary-light);
+}
+
+/* Pro Forma Import Modal */
+.proforma-modal-content {
+  max-width: 520px;
+}
+
+.proforma-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 0 4px;
+}
+
+.proforma-select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.proforma-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.proforma-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--success-muted);
+  border: 1px solid var(--success);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.proforma-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* Preview grid: 6 cols × 2 rows */
+.proforma-preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.proforma-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.proforma-preview-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 4px;
+  gap: 2px;
+}
+
+.proforma-month {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.proforma-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Login Screen */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 1000;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.login-logo-text {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+
+.login-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 28px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-error {
+  font-size: 13px;
+  color: var(--danger);
+  min-height: 18px;
+}
+
+.login-submit {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 4px;
 }

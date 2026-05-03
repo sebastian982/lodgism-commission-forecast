@@ -47,11 +47,11 @@ router.get('/:id', (req, res) => {
 // POST create property
 router.post('/', (req, res) => {
   const db = getDB();
-  const { name, market, status, commRate, note, gri } = req.body;
+  const { name, address, status, commRate, note, gri } = req.body;
 
   const result = db.prepare(
-    'INSERT INTO properties (name, market, status, commRate, note) VALUES (?, ?, ?, ?, ?)'
-  ).run(name, market, status || 'Active', commRate || 0.20, note || null);
+    'INSERT INTO properties (name, address, status, commRate, note) VALUES (?, ?, ?, ?, ?)'
+  ).run(name, address, status || 'Active', commRate || 0.20, note || null);
 
   const propertyId = result.lastInsertRowid;
 
@@ -73,7 +73,7 @@ router.post('/', (req, res) => {
 // PUT update property
 router.put('/:id', (req, res) => {
   const db = getDB();
-  const { name, market, status, commRate, note, gri } = req.body;
+  const { name, address, status, commRate, note, gri } = req.body;
   const id = parseInt(req.params.id);
 
   const existing = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
@@ -82,10 +82,10 @@ router.put('/:id', (req, res) => {
   }
 
   db.prepare(
-    "UPDATE properties SET name = ?, market = ?, status = ?, commRate = ?, note = ?, updatedAt = datetime('now') WHERE id = ?"
+    "UPDATE properties SET name = ?, address = ?, status = ?, commRate = ?, note = ?, updatedAt = datetime('now') WHERE id = ?"
   ).run(
     name || existing.name,
-    market || existing.market,
+    address || existing.address,
     status || existing.status,
     commRate !== undefined ? commRate : existing.commRate,
     note !== undefined ? note : existing.note,

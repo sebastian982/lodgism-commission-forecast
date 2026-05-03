@@ -29,7 +29,8 @@
           <option value="2027">2027</option>
           <option value="2028">2028</option>
         </select>
-        <a href="/api/export" class="export-btn">Export JSON</a>
+        <button id="exportBtn" class="export-btn">Export JSON</button>
+        <button id="logoutBtn" class="btn btn-secondary" style="font-size:13px;padding:8px 14px">Sign Out</button>
       </div>
     </header>
 
@@ -89,13 +90,19 @@
             <button class="btn btn-secondary" id="importBtn">Import</button>
           </div>
           <div class="filters">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search name or location...">
+            <select id="sortSelect" class="filter-select">
+              <option value="state">By State</option>
+              <option value="alphabetical">Alphabetical (A-Z)</option>
+              <option value="revenue">Projected Revenue (High to Low)</option>
+            </select>
             <select id="statusFilter" class="filter-select">
               <option value="">All Status</option>
               <option value="Active">Active</option>
               <option value="In Launch">In Launch</option>
             </select>
-            <select id="marketFilter" class="filter-select">
-              <option value="">All Markets</option>
+            <select id="addressFilter" class="filter-select">
+              <option value="">All Locations</option>
             </select>
           </div>
         </div>
@@ -132,8 +139,8 @@
             <input type="text" id="propName" required>
           </div>
           <div class="form-group">
-            <label for="propMarket">Market</label>
-            <input type="text" id="propMarket" required>
+            <label for="propAddress">Address</label>
+            <input type="text" id="propAddress" placeholder="e.g. 122 Timber Ln, Littleton, NH" required>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -144,7 +151,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="propCommRate">Commission Rate</label>
+              <label for="propCommRate">Lodgism Rate</label>
               <input type="number" id="propCommRate" step="0.01" min="0" max="1" value="0.20">
             </div>
           </div>
@@ -152,7 +159,10 @@
             <label for="propNote">Note</label>
             <textarea id="propNote" rows="3"></textarea>
           </div>
-          <h3>Monthly GRI Projections</h3>
+          <div class="gri-section-header">
+            <h3>Monthly GRI Projections</h3>
+            <button type="button" class="btn-link" id="proformaBtn">Import from Pro Forma</button>
+          </div>
           <div class="gri-inputs" id="griInputs"></div>
           <button type="submit" class="btn btn-primary">Add Property</button>
         </form>
@@ -174,8 +184,8 @@
           <input type="text" id="editPropName" required>
         </div>
         <div class="form-group">
-          <label for="editPropMarket">Market</label>
-          <input type="text" id="editPropMarket" required>
+          <label for="editPropAddress">Address</label>
+          <input type="text" id="editPropAddress" required>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -186,7 +196,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="editPropCommRate">Commission Rate</label>
+            <label for="editPropCommRate">Lodgism Rate</label>
             <input type="number" id="editPropCommRate" step="0.01" min="0" max="1">
           </div>
         </div>
@@ -194,7 +204,10 @@
           <label for="editPropNote">Note</label>
           <textarea id="editPropNote" rows="3"></textarea>
         </div>
-        <h4>Monthly GRI Projections</h4>
+        <div class="gri-section-header">
+          <h4>Monthly GRI Projections</h4>
+          <button type="button" class="btn-link" id="editProformaBtn">Import from Pro Forma</button>
+        </div>
         <div class="gri-inputs" id="editGriInputs"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-danger" id="deletePropertyBtn">Delete</button>
@@ -286,11 +299,91 @@
       <div class="import-result" id="importResult" style="display: none;"></div>
       <div class="import-help">
         <h4>Expected Columns</h4>
-        <p>Property, Market, Status, Comm %, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec</p>
+        <p>Property, Address, Status, Comm %, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec</p>
       </div>
     </div>
   </div>
 
+  <!-- Pro Forma Import -->
+  <input type="file" id="proformaFileInput" accept=".xlsx,.xls" hidden>
+
+  <div class="modal" id="proformaModal">
+    <div class="modal-content proforma-modal-content">
+      <div class="modal-header">
+        <h3>Import GRI from Pro Forma</h3>
+        <button class="modal-close" id="closeProformaModal">&times;</button>
+      </div>
+
+      <div class="proforma-body">
+        <div class="form-group">
+          <label>Spreadsheet Tab</label>
+          <select id="proformaSheetSelect" class="proforma-select"></select>
+        </div>
+
+        <div id="proformaRowSection" style="display:none">
+          <div id="proformaAutoDetectNotice" class="proforma-notice" style="display:none">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="8" fill="#10b981"/>
+              <path d="M4.5 8l2.5 2.5 4.5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Auto-detected: <strong id="proformaDetectedLabel"></strong>
+          </div>
+
+          <div class="form-group" id="proformaRowGroup" style="display:none">
+            <label>Select Row</label>
+            <select id="proformaRowSelect" class="proforma-select"></select>
+          </div>
+
+          <div id="proformaPreview" style="display:none">
+            <div class="proforma-preview-label">Monthly Values Preview</div>
+            <div class="proforma-preview-grid" id="proformaPreviewGrid"></div>
+          </div>
+        </div>
+
+        <div id="proformaNoRows" class="proforma-empty" style="display:none">
+          No rows with 12 monthly values found in this sheet.
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="proformaConfirmBtn" style="display:none">
+          Use These Values
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4L4 16V36H16V24H24V36H36V16L20 4Z" fill="currentColor"/>
+        </svg>
+        <span class="login-logo-text">LODGISM</span>
+      </div>
+      <h2 class="login-title">Commission Forecast</h2>
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        </div>
+        <p id="loginError" class="login-error"></p>
+        <button type="submit" id="loginBtn" class="btn btn-primary login-submit">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- CDN: Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- CDN: SheetJS (XLSX parsing in the browser) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- Your Supabase credentials — copy config.js.example → config.js and fill in -->
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
