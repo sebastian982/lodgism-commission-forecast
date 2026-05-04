@@ -68,6 +68,27 @@ function showApp() {
 }
 
 function setupLoginHandlers() {
+  let isSignUp = false;
+
+  document.getElementById('loginToggle').addEventListener('click', () => {
+    isSignUp = !isSignUp;
+    const btn    = document.getElementById('loginBtn');
+    const toggle = document.getElementById('loginToggle');
+    const title  = document.querySelector('.login-title');
+    if (isSignUp) {
+      btn.textContent    = 'Create Account';
+      toggle.textContent = 'Sign In';
+      document.querySelector('.login-toggle').firstChild.textContent = 'Already have an account? ';
+      title.textContent  = 'Create Account';
+    } else {
+      btn.textContent    = 'Sign In';
+      toggle.textContent = 'Sign Up';
+      document.querySelector('.login-toggle').firstChild.textContent = "Don't have an account? ";
+      title.textContent  = 'Commission Forecast';
+    }
+    document.getElementById('loginError').textContent = '';
+  });
+
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email    = document.getElementById('loginEmail').value;
@@ -75,14 +96,26 @@ function setupLoginHandlers() {
     const btn      = document.getElementById('loginBtn');
     const errEl    = document.getElementById('loginError');
 
-    btn.disabled    = true;
-    btn.textContent = 'Signing in…';
+    btn.disabled      = true;
+    btn.textContent   = isSignUp ? 'Creating account…' : 'Signing in…';
     errEl.textContent = '';
 
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    btn.disabled    = false;
-    btn.textContent = 'Sign In';
-    if (error) errEl.textContent = error.message;
+    if (isSignUp) {
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      btn.disabled    = false;
+      btn.textContent = 'Create Account';
+      if (error) {
+        errEl.textContent = error.message;
+      } else {
+        errEl.style.color = 'var(--success)';
+        errEl.textContent = 'Account created! You are now signed in.';
+      }
+    } else {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      btn.disabled    = false;
+      btn.textContent = 'Sign In';
+      if (error) errEl.textContent = error.message;
+    }
   });
 }
 
